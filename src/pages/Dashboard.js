@@ -9,6 +9,17 @@ function Dashboard({ user, setUser }) {
 
   useEffect(() => {
     if (user) {
+      // Try to load from localStorage first (offline mode)
+      const storedBudgets = localStorage.getItem("brokebuddy_budgets");
+      if (storedBudgets) {
+        try {
+          setBudgets(JSON.parse(storedBudgets));
+          return;
+        } catch (e) {
+          localStorage.removeItem("brokebuddy_budgets");
+        }
+      }
+
       fetch("http://localhost:5555/budgets", {
         credentials: "include",
       })
@@ -18,9 +29,12 @@ function Dashboard({ user, setUser }) {
           }
           return res.json();
         })
-        .then((data) => setBudgets(data))
+        .then((data) => {
+          setBudgets(data);
+          localStorage.setItem("brokebuddy_budgets", JSON.stringify(data));
+        })
         .catch((error) => {
-          console.error("Failed to fetch budgets:", error);
+          console.error("Failed to fetch budgets - using offline mode:", error);
           setBudgets([]);
         });
     }
