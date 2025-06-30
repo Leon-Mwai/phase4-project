@@ -155,17 +155,17 @@ function Budgets({ user }) {
 
   function handleExpenseAdded(newExpense) {
     // Update the budget to include the new expense
-    setBudgets(
-      budgets.map((budget) => {
-        if (budget.id === newExpense.budget_id) {
-          return {
-            ...budget,
-            expenses: [...(budget.expenses || []), newExpense],
-          };
-        }
-        return budget;
-      }),
-    );
+    const updatedBudgets = budgets.map((budget) => {
+      if (budget.id === newExpense.budget_id) {
+        return {
+          ...budget,
+          expenses: [...(budget.expenses || []), newExpense],
+        };
+      }
+      return budget;
+    });
+    setBudgets(updatedBudgets);
+    localStorage.setItem("brokebuddy_budgets", JSON.stringify(updatedBudgets));
     setShowExpenseForm(null);
   }
 
