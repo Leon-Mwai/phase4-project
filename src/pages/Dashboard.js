@@ -1,6 +1,45 @@
 import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import ExpenseList from "../components/ExpenseList";
+import "../styles/Expenses.css";
 
 function Dashboard({ user, setUser }) {
+  const [budgets, setBudgets] = useState([]);
+  const [showExpenseReport, setShowExpenseReport] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      // Try to load from localStorage first (offline mode)
+      const storedBudgets = localStorage.getItem("brokebuddy_budgets");
+      if (storedBudgets) {
+        try {
+          setBudgets(JSON.parse(storedBudgets));
+          return;
+        } catch (e) {
+          localStorage.removeItem("brokebuddy_budgets");
+        }
+      }
+
+      fetch("http://localhost:5555/budgets", {
+        credentials: "include",
+      })
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+          }
+          return res.json();
+        })
+        .then((data) => {
+          setBudgets(data);
+          localStorage.setItem("brokebuddy_budgets", JSON.stringify(data));
+        })
+        .catch((error) => {
+          console.error("Failed to fetch budgets - using offline mode:", error);
+          setBudgets([]);
+        });
+    }
+  }, [user]);
+
   if (!user) {
     return (
       <div className="error-container">
@@ -16,35 +55,45 @@ function Dashboard({ user, setUser }) {
     );
   }
 
-  const mockStats = [
+  // Calculate real stats from budgets data
+  const totalBudget = budgets.reduce((sum, budget) => sum + budget.amount, 0);
+  const totalSpent = budgets.reduce((sum, budget) => {
+    const budgetSpent = budget.expenses?.reduce((s, e) => s + e.cost, 0) || 0;
+    return sum + budgetSpent;
+  }, 0);
+  const totalSaved = totalBudget - totalSpent;
+  const activeBudgets = budgets.length;
+
+  const statsData = [
     {
       title: "Total Budget",
-      value: "KSh 45,000",
-      change: "+12% from last month",
+      value: `KSh ${totalBudget.toLocaleString()}`,
+      change: `${activeBudgets} active budgets`,
       positive: true,
       icon: "💰",
       color: "--primary-600",
     },
     {
       title: "Money Spent",
-      value: "KSh 28,500",
-      change: "-5% from last month",
-      positive: true,
+      value: `KSh ${totalSpent.toLocaleString()}`,
+      change: `${((totalSpent / totalBudget) * 100 || 0).toFixed(1)}% of budget`,
+      positive: totalSpent <= totalBudget,
       icon: "💸",
       color: "--error-600",
     },
     {
-      title: "Money Saved",
-      value: "KSh 16,500",
-      change: "+23% from last month",
-      positive: true,
+      title: "Money Remaining",
+      value: `KSh ${totalSaved.toLocaleString()}`,
+      change: totalSaved >= 0 ? "Within budget" : "Over budget",
+      positive: totalSaved >= 0,
       icon: "💎",
       color: "--success-600",
     },
     {
       title: "Active Budgets",
-      value: "4",
-      change: "+1 this month",
+      value: activeBudgets.toString(),
+      change:
+        activeBudgets === 0 ? "Create your first budget" : "Budget categories",
       positive: true,
       icon: "📊",
       color: "--warning-600",
@@ -67,7 +116,7 @@ function Dashboard({ user, setUser }) {
             Financial Overview
           </h2>
           <div className="dashboard-stats">
-            {mockStats.map((stat, index) => (
+            {statsData.map((stat, index) => (
               <div key={index} className="stat-card">
                 <div className="stat-card-header">
                   <h3 className="stat-card-title">{stat.title}</h3>
@@ -139,9 +188,15 @@ function Dashboard({ user, setUser }) {
                 Record a new expense and categorize it to keep your budget
                 tracking accurate.
               </p>
-              <button className="btn btn-secondary" disabled>
-                Coming Soon
-              </button>
+              {budgets.length > 0 ? (
+                <Link to="/budgets" className="btn btn-primary">
+                  Add Expense
+                </Link>
+              ) : (
+                <Link to="/budgets" className="btn btn-secondary">
+                  Create Budget First
+                </Link>
+              )}
             </div>
 
             <div className="stat-card">
@@ -161,8 +216,11 @@ function Dashboard({ user, setUser }) {
                 Analyze your spending patterns and get insights to improve your
                 financial health.
               </p>
-              <button className="btn btn-secondary" disabled>
-                Coming Soon
+              <button
+                className="btn btn-primary"
+                onClick={() => setShowExpenseReport(!showExpenseReport)}
+              >
+                {showExpenseReport ? "Hide Reports" : "View Reports"}
               </button>
             </div>
           </div>
@@ -195,6 +253,12 @@ function Dashboard({ user, setUser }) {
             </div>
           </div>
         </section>
+
+        {showExpenseReport && (
+          <section>
+            <ExpenseList user={user} budgets={budgets} />
+          </section>
+        )}
       </div>
     </div>
   );

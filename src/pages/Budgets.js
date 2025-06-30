@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "../styles/Budgets.css";
+import "../styles/Expenses.css";
+import ExpenseForm from "../components/ExpenseForm";
 
 function Budgets({ user }) {
   const [budgets, setBudgets] = useState([]);
@@ -7,9 +9,23 @@ function Budgets({ user }) {
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showExpenseForm, setShowExpenseForm] = useState(null);
 
   useEffect(() => {
     setIsLoading(true);
+
+    // Try to load from localStorage first (offline mode)
+    const storedBudgets = localStorage.getItem("brokebuddy_budgets");
+    if (storedBudgets) {
+      try {
+        setBudgets(JSON.parse(storedBudgets));
+        setIsLoading(false);
+        return;
+      } catch (e) {
+        localStorage.removeItem("brokebuddy_budgets");
+      }
+    }
+
     fetch("http://localhost:5555/budgets", {
       credentials: "include",
     })
@@ -19,10 +35,15 @@ function Budgets({ user }) {
         }
         return res.json();
       })
-      .then((data) => setBudgets(data))
+      .then((data) => {
+        setBudgets(data);
+        localStorage.setItem("brokebuddy_budgets", JSON.stringify(data));
+      })
       .catch((error) => {
-        console.error("Failed to fetch budgets:", error);
+        console.error("Failed to fetch budgets - using offline mode:", error);
+        // Initialize with empty array for offline mode
         setBudgets([]);
+        localStorage.setItem("brokebuddy_budgets", JSON.stringify([]));
       })
       .finally(() => setIsLoading(false));
   }, []);
@@ -82,12 +103,31 @@ function Budgets({ user }) {
         return res.json();
       })
       .then((newBudget) => {
-        setBudgets([...budgets, newBudget]);
+        const updatedBudgets = [...budgets, newBudget];
+        setBudgets(updatedBudgets);
+        localStorage.setItem(
+          "brokebuddy_budgets",
+          JSON.stringify(updatedBudgets),
+        );
         setFormData({ title: "", amount: "" });
       })
       .catch((error) => {
-        console.error("Failed to create budget:", error);
-        setErrors({ general: "Failed to create budget. Please try again." });
+        console.error("Failed to create budget - using offline mode:", error);
+        // Create budget locally for offline mode
+        const newBudget = {
+          id: Date.now(), // Use timestamp as ID for offline mode
+          title: formData.title.trim(),
+          amount: parseFloat(formData.amount),
+          user_id: user.id,
+          expenses: [],
+        };
+        const updatedBudgets = [...budgets, newBudget];
+        setBudgets(updatedBudgets);
+        localStorage.setItem(
+          "brokebuddy_budgets",
+          JSON.stringify(updatedBudgets),
+        );
+        setFormData({ title: "", amount: "" });
       })
       .finally(() => setIsSubmitting(false));
   }
@@ -113,9 +153,33 @@ function Budgets({ user }) {
       });
   }
 
+  function handleExpenseAdded(newExpense) {
+    // Update the budget to include the new expense
+    const updatedBudgets = budgets.map((budget) => {
+      if (budget.id === newExpense.budget_id) {
+        return {
+          ...budget,
+          expenses: [...(budget.expenses || []), newExpense],
+        };
+      }
+      return budget;
+    });
+    setBudgets(updatedBudgets);
+    localStorage.setItem("brokebuddy_budgets", JSON.stringify(updatedBudgets));
+    setShowExpenseForm(null);
+  }
+
+  function handleShowExpenseForm(budget) {
+    setShowExpenseForm(budget);
+  }
+
+  function handleCancelExpenseForm() {
+    setShowExpenseForm(null);
+  }
+
   function getBudgetProgress(budget) {
     const totalSpent =
-      budget.transactions?.reduce((sum, t) => sum + t.amount, 0) || 0;
+      budget.expenses?.reduce((sum, e) => sum + e.cost, 0) || 0;
     const percentUsed = Math.min((totalSpent / budget.amount) * 100, 100);
     const remaining = Math.max(budget.amount - totalSpent, 0);
 
@@ -293,7 +357,10 @@ function Budgets({ user }) {
                     >
                       Delete
                     </button>
-                    <button className="btn btn-primary btn-sm" disabled>
+                    <button
+                      className="btn btn-primary btn-sm"
+                      onClick={() => handleShowExpenseForm(budget)}
+                    >
                       Add Expense
                     </button>
                   </div>
@@ -301,6 +368,14 @@ function Budgets({ user }) {
               );
             })}
           </div>
+        )}
+
+        {showExpenseForm && (
+          <ExpenseForm
+            budget={showExpenseForm}
+            onExpenseAdded={handleExpenseAdded}
+            onCancel={handleCancelExpenseForm}
+          />
         )}
       </div>
     </div>

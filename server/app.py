@@ -122,6 +122,28 @@ class Expenses(Resource):
         except Exception as e:
             return {'error': str(e)}, 400
 
+
+class ExpenseDetail(Resource):
+    def delete(self, expense_id):
+        expense = Expense.query.get(expense_id)
+        if not expense:
+            return {'error': 'Expense not found'}, 404
+
+        db.session.delete(expense)
+        db.session.commit()
+        return {'message': 'Expense deleted'}, 200
+
+
+class BudgetDetail(Resource):
+    def delete(self, budget_id):
+        budget = Budget.query.get(budget_id)
+        if not budget:
+            return {'error': 'Budget not found'}, 404
+
+        db.session.delete(budget)
+        db.session.commit()
+        return {'message': 'Budget deleted'}, 200
+
 # === Register Resources ===
 
 api.add_resource(Signup, '/signup')
@@ -131,7 +153,9 @@ api.add_resource(CheckSession, '/check_session')
 
 api.add_resource(Users, '/users')
 api.add_resource(Budgets, '/budgets')
+api.add_resource(BudgetDetail, '/budgets/<int:budget_id>')
 api.add_resource(Expenses, '/expenses')
+api.add_resource(ExpenseDetail, '/expenses/<int:expense_id>')
 
 # === Run App ===
 
