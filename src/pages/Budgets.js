@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "../styles/Budgets.css";
+import "../styles/Expenses.css";
+import ExpenseForm from "../components/ExpenseForm";
 
 function Budgets({ user }) {
   const [budgets, setBudgets] = useState([]);
@@ -7,6 +9,7 @@ function Budgets({ user }) {
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showExpenseForm, setShowExpenseForm] = useState(null);
 
   useEffect(() => {
     setIsLoading(true);
@@ -113,9 +116,33 @@ function Budgets({ user }) {
       });
   }
 
+  function handleExpenseAdded(newExpense) {
+    // Update the budget to include the new expense
+    setBudgets(
+      budgets.map((budget) => {
+        if (budget.id === newExpense.budget_id) {
+          return {
+            ...budget,
+            expenses: [...(budget.expenses || []), newExpense],
+          };
+        }
+        return budget;
+      }),
+    );
+    setShowExpenseForm(null);
+  }
+
+  function handleShowExpenseForm(budget) {
+    setShowExpenseForm(budget);
+  }
+
+  function handleCancelExpenseForm() {
+    setShowExpenseForm(null);
+  }
+
   function getBudgetProgress(budget) {
     const totalSpent =
-      budget.transactions?.reduce((sum, t) => sum + t.amount, 0) || 0;
+      budget.expenses?.reduce((sum, e) => sum + e.cost, 0) || 0;
     const percentUsed = Math.min((totalSpent / budget.amount) * 100, 100);
     const remaining = Math.max(budget.amount - totalSpent, 0);
 
@@ -293,7 +320,10 @@ function Budgets({ user }) {
                     >
                       Delete
                     </button>
-                    <button className="btn btn-primary btn-sm" disabled>
+                    <button
+                      className="btn btn-primary btn-sm"
+                      onClick={() => handleShowExpenseForm(budget)}
+                    >
                       Add Expense
                     </button>
                   </div>
@@ -301,6 +331,14 @@ function Budgets({ user }) {
               );
             })}
           </div>
+        )}
+
+        {showExpenseForm && (
+          <ExpenseForm
+            budget={showExpenseForm}
+            onExpenseAdded={handleExpenseAdded}
+            onCancel={handleCancelExpenseForm}
+          />
         )}
       </div>
     </div>
