@@ -110,25 +110,45 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Check if user is stored in localStorage (offline mode)
+    const storedUser = localStorage.getItem("brokebuddy_user");
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+        setLoading(false);
+        return;
+      } catch (e) {
+        localStorage.removeItem("brokebuddy_user");
+      }
+    }
+
     fetch("http://localhost:5555/check_session", {
       credentials: "include",
     })
       .then((res) => (res.ok ? res.json().then(setUser) : setUser(null)))
       .catch((error) => {
-        console.error("Session check error:", error);
+        console.error(
+          "Session check error - Backend not available, using offline mode:",
+          error,
+        );
         setUser(null);
       })
       .finally(() => setLoading(false));
   }, []);
 
   function handleLogout() {
+    // Clear localStorage for offline mode
+    localStorage.removeItem("brokebuddy_user");
+    localStorage.removeItem("brokebuddy_budgets");
+    localStorage.removeItem("brokebuddy_expenses");
+
     fetch("http://localhost:5555/logout", {
       method: "DELETE",
       credentials: "include",
     })
       .then(() => setUser(null))
       .catch((error) => {
-        console.error("Logout error:", error);
+        console.error("Logout error - using offline mode:", error);
         setUser(null);
       });
   }
