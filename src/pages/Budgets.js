@@ -13,6 +13,19 @@ function Budgets({ user }) {
 
   useEffect(() => {
     setIsLoading(true);
+
+    // Try to load from localStorage first (offline mode)
+    const storedBudgets = localStorage.getItem("brokebuddy_budgets");
+    if (storedBudgets) {
+      try {
+        setBudgets(JSON.parse(storedBudgets));
+        setIsLoading(false);
+        return;
+      } catch (e) {
+        localStorage.removeItem("brokebuddy_budgets");
+      }
+    }
+
     fetch("http://localhost:5555/budgets", {
       credentials: "include",
     })
@@ -22,10 +35,15 @@ function Budgets({ user }) {
         }
         return res.json();
       })
-      .then((data) => setBudgets(data))
+      .then((data) => {
+        setBudgets(data);
+        localStorage.setItem("brokebuddy_budgets", JSON.stringify(data));
+      })
       .catch((error) => {
-        console.error("Failed to fetch budgets:", error);
+        console.error("Failed to fetch budgets - using offline mode:", error);
+        // Initialize with empty array for offline mode
         setBudgets([]);
+        localStorage.setItem("brokebuddy_budgets", JSON.stringify([]));
       })
       .finally(() => setIsLoading(false));
   }, []);
@@ -85,12 +103,31 @@ function Budgets({ user }) {
         return res.json();
       })
       .then((newBudget) => {
-        setBudgets([...budgets, newBudget]);
+        const updatedBudgets = [...budgets, newBudget];
+        setBudgets(updatedBudgets);
+        localStorage.setItem(
+          "brokebuddy_budgets",
+          JSON.stringify(updatedBudgets),
+        );
         setFormData({ title: "", amount: "" });
       })
       .catch((error) => {
-        console.error("Failed to create budget:", error);
-        setErrors({ general: "Failed to create budget. Please try again." });
+        console.error("Failed to create budget - using offline mode:", error);
+        // Create budget locally for offline mode
+        const newBudget = {
+          id: Date.now(), // Use timestamp as ID for offline mode
+          title: formData.title.trim(),
+          amount: parseFloat(formData.amount),
+          user_id: user.id,
+          expenses: [],
+        };
+        const updatedBudgets = [...budgets, newBudget];
+        setBudgets(updatedBudgets);
+        localStorage.setItem(
+          "brokebuddy_budgets",
+          JSON.stringify(updatedBudgets),
+        );
+        setFormData({ title: "", amount: "" });
       })
       .finally(() => setIsSubmitting(false));
   }
