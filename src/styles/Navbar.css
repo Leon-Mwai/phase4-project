@@ -1,36 +1,207 @@
 .navbar {
+  background: white;
+  border-bottom: 1px solid var(--gray-200);
+  box-shadow: var(--shadow-sm);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.navbar-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space-4);
   display: flex;
-  justify-content: flex-start;
-  gap: 1rem;
-  padding: 1rem 2rem;
-  background: #1e1e2f;
-  color: white;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+  align-items: center;
+  justify-content: space-between;
+  height: 4rem;
+}
+
+.navbar-brand {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--primary-600);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.navbar-brand:hover {
+  color: var(--primary-700);
+}
+
+.navbar-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  list-style: none;
 }
 
 .nav-link {
-  color: white;
+  color: var(--gray-600);
   text-decoration: none;
   font-weight: 500;
-  transition: 0.3s ease;
+  font-size: var(--font-size-sm);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 .nav-link:hover {
-  color: #58d68d;
-  text-decoration: underline;
+  color: var(--primary-600);
+  background-color: var(--primary-50);
+}
+
+.nav-link.active {
+  color: var(--primary-600);
+  background-color: var(--primary-50);
+}
+
+.nav-link-icon {
+  font-size: var(--font-size-base);
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.nav-user {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background-color: var(--gray-50);
+  border-radius: var(--radius-lg);
+}
+
+.nav-user-avatar {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+}
+
+.nav-user-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.nav-user-name {
+  font-weight: 500;
+  color: var(--gray-900);
+  font-size: var(--font-size-sm);
+  line-height: 1.25;
+}
+
+.nav-user-email {
+  font-size: var(--font-size-xs);
+  color: var(--gray-500);
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .nav-btn {
-  background-color: #e74c3c;
-  color: white;
-  border: none;
-  padding: 0.4rem 0.8rem;
-  border-radius: 5px;
+  background: none;
+  border: 1px solid var(--gray-300);
+  color: var(--gray-700);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
   cursor: pointer;
-  font-weight: 600;
-  transition: background-color 0.3s ease;
+  transition: all var(--transition-fast);
 }
 
 .nav-btn:hover {
-  background-color: #c0392b;
+  background-color: var(--gray-50);
+  border-color: var(--gray-400);
+}
+
+.nav-btn-danger {
+  color: var(--error-600);
+  border-color: var(--error-200);
+}
+
+.nav-btn-danger:hover {
+  background-color: var(--error-50);
+  border-color: var(--error-300);
+}
+
+/* Mobile Navigation */
+.navbar-mobile-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--gray-600);
+  font-size: var(--font-size-lg);
+  cursor: pointer;
+  padding: var(--space-2);
+}
+
+@media (max-width: 768px) {
+  .navbar-container {
+    padding: 0 var(--space-3);
+  }
+
+  .navbar-nav {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border-top: 1px solid var(--gray-200);
+    box-shadow: var(--shadow-lg);
+    flex-direction: column;
+    padding: var(--space-4);
+    gap: var(--space-2);
+  }
+
+  .navbar-nav.open {
+    display: flex;
+  }
+
+  .navbar-mobile-toggle {
+    display: block;
+  }
+
+  .nav-actions {
+    gap: var(--space-2);
+  }
+
+  .nav-user-info {
+    display: none;
+  }
+
+  .nav-link {
+    width: 100%;
+    justify-content: center;
+    padding: var(--space-3);
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar-brand {
+    font-size: var(--font-size-lg);
+  }
+
+  .nav-user-avatar {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
 }
