@@ -22,8 +22,8 @@ bcrypt = Bcrypt()  # ✅ Bcrypt for hashing
 def create_app():
     app = Flask(__name__)
 
-    # PostgreSQL DB
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://leon:Access@localhost/broke_buddy'
+    # SQLite DB for development
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///broke_buddy.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     # Secret key for sessions
