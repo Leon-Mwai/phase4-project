@@ -57,14 +57,31 @@ function Login({ setUser }) {
         if (data.error) {
           setErrors({ general: data.error });
         } else {
+          // Store user in localStorage for offline mode
+          localStorage.setItem("brokebuddy_user", JSON.stringify(data));
           setUser(data);
         }
       })
       .catch((error) => {
         console.error("Login error:", error);
-        setErrors({
-          general: "Unable to connect to server. Please try again later.",
-        });
+        // Try offline demo mode
+        if (
+          formData.email === "demo@example.com" ||
+          formData.email.includes("demo")
+        ) {
+          const demoUser = {
+            id: 1,
+            username: "Demo User",
+            email: formData.email,
+          };
+          localStorage.setItem("brokebuddy_user", JSON.stringify(demoUser));
+          setUser(demoUser);
+        } else {
+          setErrors({
+            general:
+              "Backend server not available. Use 'demo@example.com' to try offline demo mode.",
+          });
+        }
       })
       .finally(() => {
         setIsLoading(false);
