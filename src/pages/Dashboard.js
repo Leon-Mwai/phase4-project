@@ -1,11 +1,16 @@
 function Dashboard({ user, setUser }) {
   function handleLogout() {
-    fetch('http://localhost:5555/logout', {
-      method: 'DELETE',
-      credentials: 'include',
+    fetch("http://localhost:5555/logout", {
+      method: "DELETE",
+      credentials: "include",
     })
       .then(() => {
         setUser(null); // Clear the user from state
+      })
+      .catch((error) => {
+        console.error("Logout error:", error);
+        // Still log out the user locally even if server request fails
+        setUser(null);
       });
   }
 
